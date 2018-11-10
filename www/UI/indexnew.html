@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no" />
+    <title>加入请求</title>
+    <style>
+      html,body,label,input,a, img,span,h1,h2,h3,h4,h5,h6,div,p{margin:0;padding:0;}
+      html,body,input,select{
+        font-family: -apple-system;
+        font-family: "-apple-system", "Helvetica Neue", "Roboto", "Segoe UI", sans-serif;}
+      html,body{
+        overflow-x:hidden;
+        height:100%;
+        width:100%;
+        background-color: #fafafa;
+      }
+      .header{
+        height: 45px;
+        line-height: 45px;
+        font-size: 18px;
+        background-color: #9d89ff;
+        text-align: center;
+        color: #fff;
+      }
+      .title{
+        height: 32px;
+        line-height: 32px;
+        font-size: 14px;
+        text-indent: 20px;
+        margin-top: 10px;
+        color: #888;
+      }
+      .inp{
+        width: 90%;
+        margin: 20px 5%;
+        border: none;
+        height: 32px;
+        font-size: 16px;
+        text-indent: 10px;
+        border-bottom: 1px solid #d1d1d1;
+        background: #fafafa;
+        outline: none;
+      }
+      .btnhold{
+        padding: 20px;
+      }
+      .button{
+        color: #fff;
+        background-color: #26a2ff;
+        font-size: 18px;
+        height: 40px;
+        line-height: 40px;
+        border-radius: 4px;
+        text-align: center;
+      }
+      .button:active{
+        background-color: #84bae2;
+      }
+      .hasrequest{
+        display: none;
+      }
+      .layer{
+        display: none;
+      }
+      .layerhide{
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        top: 0;
+        background: #929292;
+        opacity: 0.2;
+        z-index: 100;
+      }
+      .layercontent{
+        z-index: 101;
+        text-align: center;
+      }
+      .loadingimg{
+        width: 48px;
+        padding: 20px;
+      }
+    .tiphold{
+	    position: fixed;
+      bottom: 50px;
+      left: 50%;
+      -webkit-transform: translate(-50%, 0);
+      transform: translate(-50%, 0);
+      padding: 10px;
+      position: fixed;
+      max-width: 80%;
+      border-radius: 5px;
+      background: rgba(0, 0, 0, 0.7);
+      color: #fff;
+      box-sizing: border-box;
+      text-align: center;
+      z-index: 1000;
+      -webkit-transition: opacity .3s linear;
+      transition: opacity .3s linear;
+      display: none;
+    }
+    </style>
+</head>
+<body>
+  <header class="header">连接信息中心</header>
+  <div class="request">
+    <div class="title">请输入您的名称,让主人知道您是谁</div>
+    <div>
+      <input class="inp" id="name" placeholder="请输入名称" />
+    </div>
+    <div class="btnhold">
+      <div class="button" id="submit">确定</div>
+    </div>
+  </div>
+  <div class="hasrequest">
+    <div class="title">您已发送允许接入网络请求，请等待主人的确认！</div>
+  </div>
+
+  <div class="layer layerhide">
+  </div>
+  <div class="layer layercontent">
+    <img class="loadingimg" alt="loading" src="./assets/loading.gif">
+    <div>数据正在提交中...</div>
+  </div>
+	<div class="tiphold">
+		<span class="tip"></span>
+	</div>
+  <script src="./js/zepto.js"></script>
+  <script>
+    $(function(){
+      var timer ;
+      var domain = window.location.host;
+      var isEnc;
+      var redUrl;
+
+      //刚进来获取状态
+      $.ajax( {
+        type:'post',
+        async:true,
+        cache:'false',
+        data:{"rs":'getRequestStatus',"rsargs":[  ]},
+        url:'http://'+domain+'/App/b/setting/new.php',
+        crossDomain: true,
+        xhrFields: {
+          withCredentials: true
+        },
+        success:function(res,textStatus)
+        {
+          var val = JSON.parse(res);
+
+          if(val.isRequest){
+            $('.request').hide();
+            $('.hasrequest').show();
+          }else{
+            $('.request').show();
+            $('.hasrequest').hide();
+          }
+
+          isEnc = val.isEnc;
+          redUrl = val.redirectUrl || '';
+        },
+      });
+      //提交
+      $('#submit').on('click',function(){
+        var thisname = $('#name').val();
+        if(thisname == ''){
+          showtip('请输入您的名称')
+        }else{
+          $('.layer').show();
+          var ajaxRequest = $.ajax( {
+            type:'post',
+            async:true,
+            cache:'false',
+            data:{"rs":'requestAllow',"rsargs":[ thisname ]},
+            url:'http://'+domain+'/App/b/setting/new.php',
+            timeout:"6000",
+            crossDomain: true,
+            xhrFields: {
+              withCredentials: true
+            },
+            success:function(res,textStatus)
+            {
+              var val = JSON.parse(res);
+              if(val.result){
+                $('.request').hide();
+                $('.hasrequest').show();
+                if( isEnc && redUrl != '' ){
+                  window.location.href = redUrl+"?id="+10000*Math.random()
+                }
+              }else{
+                showtip(val.desc);
+              }
+              $('.layer').hide();
+            },
+            complete : function(XMLHttpRequest,status){
+              if(status=='timeout' || status=='error等值的情况'){//超时,status还有success,error等值的情况
+                ajaxRequest.abort();
+                $('.layer').hide();
+                showtip('网络超时或出错，请检查网络后重新提交');
+              }
+            }
+          });
+        }
+      });
+      //显示错误提示的
+      function showtip(text){
+        $('.tip').text(text);
+		$('.tiphold').show();
+        clearTimeout(timer);
+        timer = setTimeout(function(){
+			$('.tiphold').hide();
+		},4000)
+      }
+    })
+  </script>
+</body>
+</html>
