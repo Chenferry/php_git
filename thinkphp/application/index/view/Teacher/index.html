@@ -1,0 +1,31 @@
+
+    </!DOCTYPE html>
+    <html>
+    <head>
+    	<title>test</title>
+    	<link rel="stylesheet" type="text/css" href="/thinkphp_5.0.22_with_extend/public/static/bootstrap-3.3.7-dist/css/bootstrap.min.css">
+    </head>
+    <body class="container">
+    	<div class="row">
+    		<div class="col_md-12">
+			    <table class="table table-hover table-bordered">
+				<tr class="info">
+				<th>编号</th>	
+			    <th>姓名</th>
+			    <th>出生日期</th>
+			    <th>班级</th>
+				</tr>
+				{volist name="result" id="result" key="key"}
+				<tr>
+			    <td>{$key}</td>
+			    <td>{$result['name']}</td>
+			    <td>{$result['year']}</td>
+			    <td>{$result['class']}</td>
+				</tr>
+				{/volist}	
+				</table>		
+    		</div>
+    	</div>
+
+    </body>
+    </html>
