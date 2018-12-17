@@ -1,2 +1,2 @@
 # php_test
-php some test tp5 1
+php some test tp5
